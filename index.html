@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>The Wealth & Health of Nations - Start here</title>
+  <link rel="stylesheet" type="text/css" href="styles/base.css">
+</head>
+<body>
+  <h2>Start here - basic data binding</h2>
+  <div id="chart"></div>
+  
+  <!-- libraries -->
+  <script src="js/d3.v3.min.js"></script>
+  
+  <!-- main script -->
+  <script>
+
+  // create root svg element
+  var chart = d3.select("#chart");
+
+  // load the data
+  d3.json("data/nation_stats.json", function(nations){
+
+    chart
+      .selectAll(".nation")
+      .data(nations)
+    .enter() // add an element per nation
+      .append("div")
+      .attr("class", "nation")
+      .text(function(d) { 
+        return d.name + ", " + d.region; 
+      });
+
+  });
+
+  </script>
+</body>
+</html>
