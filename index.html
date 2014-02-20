@@ -4,33 +4,90 @@
   <meta charset="utf-8"/>
   <title>The Wealth & Health of Nations - Start here</title>
   <link rel="stylesheet" type="text/css" href="styles/base.css">
+  <style type="text/css">
+    table.world-data {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+    }
+
+    table.world-data th {
+      text-align: left;
+      text-transform: capitalize;
+      font-weight: bold; 
+      padding: 5px;
+      border-bottom: 1px solid black;
+    }
+
+    tr.nation td {
+      padding: 5px;
+    }
+
+    tr.nation.even td {
+      background-color: #eee;
+    }
+
+    tr.nation td.name {
+      width: 240px;
+    }
+
+    tr.nation td.region {
+      width: 170px;
+    }
+  </style>
 </head>
 <body>
-  <h2>Start here - basic data binding</h2>
-  <div id="chart"></div>
-  
+  <h2>Start here - binding data to HTML elements</h2>
+   
   <!-- libraries -->
   <script src="js/d3.v3.min.js"></script>
   
   <!-- main script -->
   <script>
 
-  // create root svg element
-  var chart = d3.select("#chart");
+  // select the body element a la jquery
+  var body = d3.select("body");
 
   // load the data
   d3.json("data/nation_stats.json", function(nations){
+    // create an empty table element
+    var table = body.append("table").attr("class", "world-data");
 
-    chart
-      .selectAll(".nation")
-      .data(nations)
-    .enter() // add an element per nation
-      .append("div")
+    // the names of the fields we want to include in the table
+    var columns = ["name","region"];
+
+    // first row contains headings
+    var headings = table.append("tr").attr("class", "headings");
+
+    // create a selection containing the rows that are be bound to our data
+    // n.b. at this point, this is a placeholder set with no items in it!
+    var rows = table.selectAll("tr.nation").data(nations);
+
+    // add cells for each column name
+    headings
+      .selectAll("th")
+      .data(columns)
+      .enter()
+      .append("th")
+      .text(String);
+
+    // use the enter() subselection to add a row for each nation 
+    rows
+      .enter()
+      .append("tr")
       .attr("class", "nation")
-      .text(function(d) { 
-        return d.name + ", " + d.region; 
+      .classed("even", function(d,i){
+        return i%2 === 0; 
       });
 
+    // add cells to each row for each column
+    columns.forEach(function(name){
+      rows
+        .append("td")
+        .attr("class", name)
+        .text(function(d) { 
+          return d[name];
+        });
+    })
   });
 
   </script>
