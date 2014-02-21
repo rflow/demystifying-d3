@@ -30,6 +30,11 @@
     tr.nation td.region {
       width: 170px;
     }
+
+    tr.nation td.population {
+      width: 100px;
+      text-align: right;
+    }
   </style>
 </head>
 <body>
@@ -44,13 +49,27 @@
   // select the body element a la jquery
   var body = d3.select("body");
 
-  // load the data
+  // load the data, calling back our handler function when ready
   d3.json("data/nation_stats.json", function(nations){
+    calcPopulations(nations);
+    makeTable(nations);
+  })
+
+  function calcPopulations(nations){
+    nations.forEach(function(nation){
+      var years = nation.population.length,
+          mostRecent = nation.population[years-1];
+
+      nation["population"] = mostRecent.value;
+    })
+  }
+
+  function makeTable(nations){
     // create an empty table element
     var table = body.append("table").attr("class", "world-data");
 
     // the names of the fields we want to include in the table
-    var columns = ["name","region"];
+    var columns = ["name","region","population"];
 
     // first row contains headings
     var headings = table.append("tr").attr("class", "headings");
@@ -59,17 +78,18 @@
     // n.b. at this point, this is a placeholder set with no items in it!
     var rows = table.selectAll("tr.nation").data(nations);
 
+    console.log(nations)
+
     // add cells for each column name
     headings
       .selectAll("th")
       .data(columns)
-      .enter()
+    .enter()
       .append("th")
       .text(String);
 
     // use the enter() subselection to add a row for each nation 
-    rows
-      .enter()
+    rows.enter()
       .append("tr")
       .attr("class", "nation")
       .style("background-color", function(d,i){
@@ -85,7 +105,7 @@
           return d[name];
         });
     })
-  });
+  }
 
   </script>
 </body>
