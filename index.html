@@ -8,6 +8,7 @@
     table.world-data {
       font-family: Arial, Helvetica, sans-serif;
       font-size: 14px;
+      border: none;
     }
 
     table.world-data th {
@@ -15,15 +16,11 @@
       text-transform: capitalize;
       font-weight: bold; 
       padding: 5px;
-      border-bottom: 1px solid black;
+      border-bottom: 1px solid #7B7B7B;
     }
 
     tr.nation td {
       padding: 5px;
-    }
-
-    tr.nation.even td {
-      background-color: #eee;
     }
 
     tr.nation td.name {
@@ -75,8 +72,8 @@
       .enter()
       .append("tr")
       .attr("class", "nation")
-      .classed("even", function(d,i){
-        return i%2 === 0; 
+      .style("background-color", function(d,i){
+        return (i%2 === 0) ? "#E7EEEE" : "#FFF"; 
       });
 
     // add cells to each row for each column
