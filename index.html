@@ -33,13 +33,9 @@
 
   // load the data, calling back our handler function when ready
   d3.json("data/nation_stats.json", function(nations){
-
-    // TODO: Calculate what the radius should be based on the height and
-    // the number of nations you have
-
+    radius = (height - (nations.length * paddingBetweenCircles)) / nations.length / 2;
     calcPopulations(nations);
     nationColors.domain(calcRegions(nations));
-
     plotCircles(nations);
   });
 
@@ -77,15 +73,23 @@
     var circleGroups = svg.append("g")
       .classed("circles", true);
 
-    // TODO: Setup a data binding for elements with the classname .nation
-    // to which you should bind your nations data, using the name as key.
-    // var nationCircles = ?
+    var nationCircles = circleGroups.selectAll(".nation")
+      .data(nations, function(d){
+        return d.name;
+      });
 
-    // TODO: For each nation, on the enter selection, append a circle, and
-    // set the correct class, set the radius (r), the x position (cx), the
-    // y position (cy) and the fill.
-    // nationCircles.enter()...
+    nationCircles.enter()
+      .append("circle")
+      .classed("nation", true)
 
+      .attr("r", radius)
+      .attr("cx", 10)
+      .attr("cy", function(d, i) {
+        return (((radius * 2) + paddingBetweenCircles) * i) + radius;
+      })
+      .style("fill", function(d) {
+        return nationColors(d.region);
+      });
   }
 
   </script>
