@@ -4,6 +4,12 @@
   <meta charset="utf-8"/>
   <title>The Wealth & Health of Nations</title>
   <link rel="stylesheet" type="text/css" href="styles/base.css">
+  <style type="text/css">
+    circle.nation {
+      stroke-width: 0.75px;
+      stroke: black;
+    }
+  </style>
 </head>
 <body>
 
@@ -18,7 +24,6 @@
   // define global variables
   var width = 960;
   var height = 600;
-  var radius = 5;
   var year = 2008;
   var indicators = ["income", "lifeExpectancy", "population"];
 
@@ -27,7 +32,8 @@
 
   // define scales mapping income and life expectancy to x and y position
   var incomeX = d3.scale.log().range([0, width]),
-      lifeY = d3.scale.linear().range([height, 0]);
+      lifeY = d3.scale.linear().range([height, 0]),
+      populationR = d3.scale.sqrt().range([1, 40]);
 
   // select the body element a la jquery
   var body = d3.select("body");
@@ -47,6 +53,7 @@
     // of income and life expectancy indicators across all nations and years
     incomeX.domain(calcExtents(nations, "income")).nice();
     lifeY.domain(calcExtents(nations, "lifeExpectancy")).nice();
+    populationR.domain(calcExtents(nations, "population")).nice();
 
     plotCircles(nations, year);
   });
@@ -107,7 +114,9 @@
 
     // determine which nations have valid data for this year
     var validNations = nations.filter(function(d){
-      return d.current.income && d.current.lifeExpectancy;
+      return d.current.income
+        && d.current.lifeExpectancy
+        && d.current.population;
     });
 
     // bind valid nation data to a d3 selection
@@ -120,7 +129,9 @@
     nationCircles.enter()
       .append("circle")
       .classed("nation", true)
-      .attr("r", radius)
+      .attr("r", function(d) {
+        return populationR(d.current.population);
+      })
       .attr("cx", function(d){
         return incomeX(d.current.income);
       })
@@ -129,6 +140,9 @@
       })
       .style("fill", function(d) {
         return nationColors(d.region);
+      })
+      .sort(function(a, b) {
+        return populationR(b.current.population) - populationR(a.current.population);
       });
   }
 
