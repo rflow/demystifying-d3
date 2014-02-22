@@ -7,7 +7,7 @@
 </head>
 <body>
 
-  <h2>Binding data to SVG elements</h2>
+  <h2>Making a scatterplot</h2>
 
   <!-- libraries -->
   <script src="js/d3.v3.min.js"></script>
@@ -17,33 +17,65 @@
 
   // define global variables
   var width = 960;
-  var height = 1800;
-  var paddingBetweenCircles = 3;
-  var radius;
-
-
-  // select the body element a la jquery
-  var body = d3.select("body");
-  var svg = body.append("svg")
-    .attr("height", height)
-    .attr("width", width);
+  var height = 600;
+  var radius = 5;
+  var year = 2008;
+  var indicators = ["income", "lifeExpectancy", "population"];
 
   // make a nation-based color scale
   var nationColors = d3.scale.category10();
 
+  // TODO: define scales mapping income and life expectancy
+  //       to x and y position based on the width and height
+  // NOTE: don't try to define the domain until the data is loaded!
+  // NOTE: use a log scale for income
+  // NOTE: be sure to invert the y range
+  // var incomeX = ?
+  // var lifeY = ?
+
+  // select the body element a la jquery
+  var body = d3.select("body");
+  var svg = body.append("svg")
+                .attr("height", height)
+                .attr("width", width);
+
   // load the data, calling back our handler function when ready
   d3.json("data/nation_stats.json", function(nations){
-    radius = (height - (nations.length * paddingBetweenCircles)) / nations.length / 2;
-    calcPopulations(nations);
+    // figure out indicator values for current year
+    calcCurrentValues(nations, indicators, year);
+
+    // set domain for color scale based on list of possible regions
     nationColors.domain(calcRegions(nations));
-    plotCircles(nations);
+
+    // set domains for x and y scales based on the min and max values
+    // of income and life expectancy indicators across all nations and years
+    incomeX.domain(calcExtents(nations, "income")).nice();
+    lifeY.domain(calcExtents(nations, "lifeExpectancy")).nice();
+
+    plotCircles(nations, year);
   });
+
+  function calcCurrentValues(nations, indicators, year){
+    nations.forEach(function(nation){
+      nation.current = {};
+      indicators.forEach(function(indicator){
+        nation.current[indicator] = getValueFor(nation, indicator, year);
+      });
+    });
+  }
+
+  function getValueFor(nation, indicator, year){
+    var items = nation[indicator].filter(function(d){
+      return d.year == year;
+    })
+
+    return items.length ? items[0].value : null;
+  }
 
   function calcRegions(nations) {
     return d3.nest()
 
-      // aggregate all rows into groups using the region as the group
-      // key
+      // aggregate all rows into groups using the region as the group key
       .key(function(d) {
         return d.region;
       })
@@ -58,34 +90,42 @@
       });
   }
 
-  function calcPopulations(nations){
-    nations.forEach(function(nation){
-      var years = nation.population.length,
-          mostRecent = nation.population[years-1];
+  function calcExtents(nations, indicator){
+    // get all indicator values for all nations into a single array
+    var allValues = nations.map(function(d){
+      return d[indicator];
+    }).reduce(function(values, current){
+       return values.concat(current)
+    }, []);
 
-      nation["population"] = mostRecent.value;
-    });
+    // return the min and max values using d3's extent helper
+    return d3.extent(allValues, function(d){ return d.value });
   }
 
   function plotCircles(nations) {
-
-    // setup a container for our circles.
-    var circleGroups = svg.append("g")
+    // setup a container for our circles
+    var circleGroup = svg.append("g")
       .classed("circles", true);
 
-    var nationCircles = circleGroups.selectAll(".nation")
-      .data(nations, function(d){
+    // TODO: find nations that have valid data in the current year
+    // var validNations = ?
+
+    // bind valid nation data to a d3 selection
+    var nationCircles = circleGroup.selectAll(".nation")
+      .data(validNations, function(d){
         return d.name;
       });
 
+    // create circle elements for each nation
     nationCircles.enter()
       .append("circle")
       .classed("nation", true)
-
       .attr("r", radius)
-      .attr("cx", 10)
-      .attr("cy", function(d, i) {
-        return (((radius * 2) + paddingBetweenCircles) * i) + radius;
+      .attr("cx", function(d){
+        // TODO: return the x position based on current income
+      })
+      .attr("cy", function(d) {
+        // TODO: return the y position based on current life expectancy
       })
       .style("fill", function(d) {
         return nationColors(d.region);
