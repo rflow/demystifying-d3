@@ -25,13 +25,9 @@
   // make a nation-based color scale
   var nationColors = d3.scale.category10();
 
-  // TODO: define scales mapping income and life expectancy
-  //       to x and y position based on the width and height
-  // NOTE: don't try to define the domain until the data is loaded!
-  // NOTE: use a log scale for income
-  // NOTE: be sure to invert the y range
-  // var incomeX = ?
-  // var lifeY = ?
+  // define scales mapping income and life expectancy to x and y position
+  var incomeX = d3.scale.log().range([0, width]),
+      lifeY = d3.scale.linear().range([height, 0]);
 
   // select the body element a la jquery
   var body = d3.select("body");
@@ -67,7 +63,7 @@
   function getValueFor(nation, indicator, year){
     var items = nation[indicator].filter(function(d){
       return d.year == year;
-    })
+    });
 
     return items.length ? items[0].value : null;
   }
@@ -75,7 +71,8 @@
   function calcRegions(nations) {
     return d3.nest()
 
-      // aggregate all rows into groups using the region as the group key
+      // aggregate all rows into groups using the region as the group
+      // key
       .key(function(d) {
         return d.region;
       })
@@ -91,6 +88,7 @@
   }
 
   function calcExtents(nations, indicator){
+
     // get all indicator values for all nations into a single array
     var allValues = nations.map(function(d){
       return d[indicator];
@@ -98,7 +96,7 @@
        return values.concat(current)
     }, []);
 
-    // return the min and max values using d3's extent helper
+    // return the extents
     return d3.extent(allValues, function(d){ return d.value });
   }
 
@@ -107,8 +105,10 @@
     var circleGroup = svg.append("g")
       .classed("circles", true);
 
-    // TODO: find nations that have valid data in the current year
-    // var validNations = ?
+    // determine which nations have valid data for this year
+    var validNations = nations.filter(function(d){
+      return d.current.income && d.current.lifeExpectancy;
+    });
 
     // bind valid nation data to a d3 selection
     var nationCircles = circleGroup.selectAll(".nation")
@@ -122,10 +122,10 @@
       .classed("nation", true)
       .attr("r", radius)
       .attr("cx", function(d){
-        // TODO: return the x position based on current income
+        return incomeX(d.current.income);
       })
       .attr("cy", function(d) {
-        // TODO: return the y position based on current life expectancy
+        return lifeY(d.current.lifeExpectancy);
       })
       .style("fill", function(d) {
         return nationColors(d.region);
