@@ -9,6 +9,17 @@
       stroke-width: 0.75px;
       stroke: black;
     }
+
+    text {
+      font: 10px sans-serif;
+    }
+
+    .axis path, .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
   </style>
 </head>
 <body>
@@ -22,8 +33,9 @@
   <script>
 
   // define global variables
-  var width = 960;
-  var height = 600;
+  var margin = { top : 5, right : 25, bottom : 25, left: 19.5 };
+  var width = 960 - margin.left - margin.right;
+  var height = 600 - margin.top - margin.bottom;
   var year = 2008;
   var indicators = ["income", "lifeExpectancy", "population"];
 
@@ -35,11 +47,22 @@
       lifeY = d3.scale.linear().range([height, 0]),
       populationR = d3.scale.sqrt().range([1, 40]);
 
+  // define axis helpers for x & y
+  var xAxis = d3.svg.axis()
+      .orient("bottom")
+      .ticks(12, d3.format(",d")),
+    yAxis = d3.svg.axis()
+      .orient("left");
+
   // select the body element a la jquery
   var body = d3.select("body");
+
+  // create some svg elements to hold our chart
   var svg = body.append("svg")
-                .attr("height", height)
-                .attr("width", width);
+              .attr("height", height + margin.top + margin.bottom)
+              .attr("width", width + margin.left + margin.right);
+  var chart = svg.append("g")
+                .attr("transform", "translate("+margin.left+","+margin.top+")");
 
   // load the data, calling back our handler function when ready
   d3.json("data/nation_stats.json", function(nations){
@@ -55,6 +78,7 @@
     lifeY.domain(calcExtents(nations, "lifeExpectancy")).nice();
     populationR.domain(calcExtents(nations, "population")).nice();
 
+    createAxes();
     plotCircles(nations, year);
   });
 
@@ -107,9 +131,26 @@
     return d3.extent(allValues, function(d){ return d.value });
   }
 
+  function createAxes() {
+    // set the scales on our axes, now that we have their domain ready.
+    xAxis.scale(incomeX);
+    yAxis.scale(lifeY);
+
+    // container for the x axis
+    chart.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0, " + height + ")")
+      .call(xAxis);
+
+    // container for the y axis
+    chart.append("g")
+      .attr("class", "y axis")
+      .call(yAxis);
+  }
+
   function plotCircles(nations) {
     // setup a container for our circles
-    var circleGroup = svg.append("g")
+    var circleGroup = chart.append("g")
       .classed("circles", true);
 
     // determine which nations have valid data for this year
