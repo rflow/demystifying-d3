@@ -76,17 +76,19 @@
 
     // create a selection containing the rows that are be bound to our data
     // n.b. at this point, this is a placeholder set with no items in it!
-    var rows = table.selectAll("tr.nation").data(nations);
+    var rows = table.selectAll("tr.nation").data(nations, function(d){
+      return d.name;
+    });
 
-    console.log(nations)
-
-    // add cells for each column name
+    // add header cells for each column name
     headings
       .selectAll("th")
       .data(columns)
     .enter()
       .append("th")
-      .text(String);
+      .text(function(d){
+        return d;
+      });
 
     // use the enter() subselection to add a row for each nation 
     rows.enter()
