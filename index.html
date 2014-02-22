@@ -4,43 +4,10 @@
   <meta charset="utf-8"/>
   <title>The Wealth & Health of Nations</title>
   <link rel="stylesheet" type="text/css" href="styles/base.css">
-  <style type="text/css">
-    table.world-data {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 14px;
-      border: none;
-    }
-
-    table.world-data th {
-      text-align: left;
-      text-transform: capitalize;
-      font-weight: bold;
-      padding: 5px;
-      border-bottom: 1px solid #7B7B7B;
-    }
-
-    tr.nation td {
-      padding: 5px;
-      color: white;
-    }
-
-    tr.nation td.name {
-      width: 240px;
-    }
-
-    tr.nation td.region {
-      width: 200px;
-    }
-
-    tr.nation td.population {
-      width: 100px;
-      text-align: right;
-    }
-  </style>
 </head>
 <body>
 
-  <h2>Binding data to HTML elements</h2>
+  <h2>Binding data to SVG elements</h2>
 
   <!-- libraries -->
   <script src="js/d3.v3.min.js"></script>
@@ -48,17 +15,32 @@
   <!-- main script -->
   <script>
 
+  // define global variables
+  var width = 960;
+  var height = 1800;
+  var paddingBetweenCircles = 3;
+  var radius;
+
+
   // select the body element a la jquery
   var body = d3.select("body");
+  var svg = body.append("svg")
+    .attr("height", height)
+    .attr("width", width);
 
   // make a nation-based color scale
   var nationColors = d3.scale.category10();
 
   // load the data, calling back our handler function when ready
   d3.json("data/nation_stats.json", function(nations){
+
+    // TODO: Calculate what the radius should be based on the height and
+    // the number of nations you have
+
     calcPopulations(nations);
     nationColors.domain(calcRegions(nations));
-    makeTable(nations);
+
+    plotCircles(nations);
   });
 
   function calcRegions(nations) {
@@ -86,52 +68,24 @@
           mostRecent = nation.population[years-1];
 
       nation["population"] = mostRecent.value;
-    })
+    });
   }
 
-  function makeTable(nations){
-    // create an empty table element
-    var table = body.append("table").attr("class", "world-data");
+  function plotCircles(nations) {
 
-    // the names of the fields we want to include in the table
-    var columns = ["name","region","population"];
+    // setup a container for our circles.
+    var circleGroups = svg.append("g")
+      .classed("circles", true);
 
-    // first row contains headings
-    var headings = table.append("tr").attr("class", "headings");
+    // TODO: Setup a data binding for elements with the classname .nation
+    // to which you should bind your nations data, using the name as key.
+    // var nationCircles = ?
 
-    // create a selection containing the rows that are be bound to our data
-    // n.b. at this point, this is a placeholder set with no items in it!
-    var rows = table.selectAll("tr.nation").data(nations, function(d){
-      return d.name;
-    });
+    // TODO: For each nation, on the enter selection, append a circle, and
+    // set the correct class, set the radius (r), the x position (cx), the
+    // y position (cy) and the fill.
+    // nationCircles.enter()...
 
-    // add header cells for each column name
-    headings
-      .selectAll("th")
-      .data(columns)
-    .enter()
-      .append("th")
-      .text(function(d){
-        return d;
-      });
-
-    // use the enter() subselection to add a row for each nation
-    rows.enter()
-      .append("tr")
-      .attr("class", "nation")
-      .style("background-color", function(d) {
-        return nationColors(d.region);
-      });
-
-    // add cells to each row for each column
-    columns.forEach(function(name){
-      rows
-        .append("td")
-        .attr("class", name)
-        .text(function(d) {
-          return d[name];
-        });
-    })
   }
 
   </script>
