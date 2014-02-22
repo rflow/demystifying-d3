@@ -21,6 +21,7 @@
 
     tr.nation td {
       padding: 5px;
+      color: white;
     }
 
     tr.nation td.name {
@@ -50,11 +51,34 @@
   // select the body element a la jquery
   var body = d3.select("body");
 
+  // make a nation-based color scale
+  var nationColors = d3.scale.category10();
+
   // load the data, calling back our handler function when ready
   d3.json("data/nation_stats.json", function(nations){
     calcPopulations(nations);
+    nationColors.domain(calcRegions(nations));
     makeTable(nations);
-  })
+  });
+
+  function calcRegions(nations) {
+    return d3.nest()
+
+      // aggregate all rows into groups using the region as the group
+      // key
+      .key(function(d) {
+        return d.region;
+      })
+
+      // pass our nation rows
+      .entries(nations)
+
+      // iterate over the results and collect all the group keys, which
+      // map to our region names.
+      .map(function(d) {
+        return d.key;
+      });
+  }
 
   function calcPopulations(nations){
     nations.forEach(function(nation){
@@ -95,8 +119,8 @@
     rows.enter()
       .append("tr")
       .attr("class", "nation")
-      .style("background-color", function(d,i){
-        return (i%2 === 0) ? "#E7EEEE" : "#FFF";
+      .style("background-color", function(d) {
+        return nationColors(d.region);
       });
 
     // add cells to each row for each column
