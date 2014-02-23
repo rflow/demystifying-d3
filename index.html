@@ -197,7 +197,7 @@
       .style("fill-opacity", 1e-8)
       .style("fill", function(d) {
         return nationColors(d.region);
-      })
+      });
 
     nationCircles
       .sort(function(a, b) {
@@ -238,7 +238,31 @@
     // and call this function again after the desired interval
     if (++currentYear <= finalYear) {
       setTimeout(displayData, updateInterval);
+    } else {
+      svg.selectAll(".nation").call(addInteractivity);
     }
+  }
+
+  function addInteractivity(){
+    var circles = this;
+
+    circles.on("click", function(current){
+      var currentCircle = d3.select(this);
+
+      nations.forEach(function(d){
+        if (d != current) d.active = false;
+      })
+
+      current.active = !current.active;
+
+      circles
+        .style("stroke-width", function(d){
+          return d === current && d.active ? 5 : 0.5;
+        })
+        .style("opacity", function(d){ 
+          return current.active && d.region !== current.region ? 0.2 : 1;
+        });
+    })
   }
 
   </script>
