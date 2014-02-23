@@ -5,6 +5,20 @@
   <title>The Wealth & Health of Nations</title>
   <link rel="stylesheet" type="text/css" href="styles/base.css">
   <style type="text/css">
+    body {
+      position: relative;
+    }
+
+    .big-year {
+      position: absolute;
+      top: 0;
+      right: 0;
+      font-size: 60px;
+      font-family: sans-serif;
+      line-height: 60px;
+      color: darkgrey;
+    }
+
     circle.nation {
       stroke-width: 0.75px;
       stroke: black;
@@ -24,7 +38,7 @@
 </head>
 <body>
 
-  <h2>Making a scatterplot</h2>
+  <h2>Exercise - Moving through time</h2>
 
   <!-- libraries -->
   <script src="js/d3.v3.min.js"></script>
@@ -33,11 +47,15 @@
   <script>
 
   // define global variables
-  var margin = { top : 5, right : 25, bottom : 25, left: 19.5 };
+  var nations;
+  var margin = { top : 5, right : 0, bottom : 25, left: 19.5 };
   var width = 960 - margin.left - margin.right;
   var height = 600 - margin.top - margin.bottom;
-  var year = 2008;
+  var startYear = 1820;
+  var finalYear = 2008;
+  var currentYear = startYear;
   var indicators = ["income", "lifeExpectancy", "population"];
+  var updateInterval = 150;
 
   // make a nation-based color scale
   var nationColors = d3.scale.category10();
@@ -49,10 +67,10 @@
 
   // define axis helpers for x & y
   var xAxis = d3.svg.axis()
-      .orient("bottom")
-      .ticks(12, d3.format(",d")),
-    yAxis = d3.svg.axis()
-      .orient("left");
+        .orient("bottom")
+        .ticks(12, d3.format(",d")),
+      yAxis = d3.svg.axis()
+        .orient("left");
 
   // select the body element a la jquery
   var body = d3.select("body");
@@ -61,25 +79,31 @@
   var svg = body.append("svg")
               .attr("height", height + margin.top + margin.bottom)
               .attr("width", width + margin.left + margin.right);
+
   var chart = svg.append("g")
                 .attr("transform", "translate("+margin.left+","+margin.top+")");
 
+  var circleGroup = chart.append("g").attr("class", "circles");
+
+  // append a div that will display the current year (in big font!)
+  var yearField = body.append("div").attr("class","big-year");
+
   // load the data, calling back our handler function when ready
-  d3.json("data/nation_stats.json", function(nations){
-    // figure out indicator values for current year
-    calcCurrentValues(nations, indicators, year);
+  d3.json("data/nation_stats.json", function(items){
+    // store items for future reference
+    nations = items;
 
     // set domain for color scale based on list of possible regions
     nationColors.domain(calcRegions(nations));
 
     // set domains for x and y scales based on the min and max values
     // of income and life expectancy indicators across all nations and years
-    incomeX.domain(calcExtents(nations, "income")).nice();
+    incomeX.domain(calcExtents(nations, "income"));
     lifeY.domain(calcExtents(nations, "lifeExpectancy")).nice();
     populationR.domain(calcExtents(nations, "population")).nice();
 
     createAxes();
-    plotCircles(nations, year);
+    displayData();
   });
 
   function calcCurrentValues(nations, indicators, year){
@@ -149,15 +173,11 @@
   }
 
   function plotCircles(nations) {
-    // setup a container for our circles
-    var circleGroup = chart.append("g")
-      .classed("circles", true);
-
     // determine which nations have valid data for this year
     var validNations = nations.filter(function(d){
       return d.current.income
-        && d.current.lifeExpectancy
-        && d.current.population;
+          && d.current.lifeExpectancy
+          && d.current.population;
     });
 
     // bind valid nation data to a d3 selection
@@ -166,25 +186,50 @@
         return d.name;
       });
 
-    // create circle elements for each nation
-    nationCircles.enter()
+    // use d3 enter and exit selections to determine
+    // which nations don't currently have a circle associated with them
+    // and which circles no longer correspond to a nation with valid data
+    var newCircles = nationCircles.enter(),
+        oldCircles = nationCircles.exit();
+
+    // append a circle for every entering element
+    newCircles
       .append("circle")
       .classed("nation", true)
-      .attr("r", function(d) {
-        return populationR(d.current.population);
-      })
-      .attr("cx", function(d){
-        return incomeX(d.current.income);
-      })
-      .attr("cy", function(d) {
-        return lifeY(d.current.lifeExpectancy);
-      })
       .style("fill", function(d) {
         return nationColors(d.region);
       })
+      // TODO: expand this logic so that new circles are invisible
+      //       e.g. radius and fill-opacity are zero (i.e. 1e-8)
+
+    // new & existing elements are re-sorted so smallest items are on top
+    nationCircles
       .sort(function(a, b) {
         return populationR(b.current.population) - populationR(a.current.population);
-      });
+      })
+      // TODO: add a transition to update the radius, x and y positions
+      //       according to each nation's current values
+      // NOTE: you'll need to ensure that the fill-opacity is set to 1
+      // NOTE: the transition duration should be set to match the update interval
+
+    // TODO: use a transition to animate out and remove old circles
+  }
+
+  function displayData(){
+    // update year field
+    yearField.text(currentYear);
+
+    // calculate values for current year
+    calcCurrentValues(nations, indicators, currentYear);
+
+    // plot the current state of the scatterplot
+    plotCircles(nations);
+
+    // until we reach the final year, advance year
+    // and call this function again after the desired interval
+    if (++currentYear <= finalYear) {
+      setTimeout(displayData, updateInterval);
+    }
   }
 
   </script>
