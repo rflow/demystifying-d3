@@ -37,8 +37,7 @@
   </style>
 </head>
 <body>
-
-  <h2>Exercise - Moving through time</h2>
+  <h2>Moving through time</h2>
 
   <!-- libraries -->
   <script src="js/d3.v3.min.js"></script>
@@ -186,33 +185,43 @@
         return d.name;
       });
 
-    // use d3 enter and exit selections to determine
-    // which nations don't currently have a circle associated with them
-    // and which circles no longer correspond to a nation with valid data
     var newCircles = nationCircles.enter(),
         oldCircles = nationCircles.exit();
+
 
     // append a circle for every entering element
     newCircles
       .append("circle")
       .classed("nation", true)
+      .attr("r", 1e-8)
+      .style("fill-opacity", 1e-8)
       .style("fill", function(d) {
         return nationColors(d.region);
       })
-      // TODO: expand this logic so that new circles are invisible
-      //       e.g. radius and fill-opacity are zero (i.e. 1e-8)
 
-    // new & existing elements are re-sorted so smallest items are on top
     nationCircles
       .sort(function(a, b) {
         return populationR(b.current.population) - populationR(a.current.population);
       })
-      // TODO: add a transition to update the radius, x and y positions
-      //       according to each nation's current values
-      // NOTE: you'll need to ensure that the fill-opacity is set to 1
-      // NOTE: the transition duration should be set to match the update interval
+      .transition()
+      .duration(updateInterval)
+      .attr("r", function(d) {
+        return populationR(d.current.population);
+      })
+      .attr("cx", function(d){
+        return incomeX(d.current.income);
+      })
+      .attr("cy", function(d) {
+        return lifeY(d.current.lifeExpectancy);
+      })
+      .style("fill-opacity", 1);
 
-    // TODO: use a transition to animate out and remove old circles
+    oldCircles
+      .transition()
+      .duration(updateInterval * 2/3)
+      .attr("r", 1e-8)
+      .style("fill-opacity", 1e-8)
+      .remove();
   }
 
   function displayData(){
